@@ -2,37 +2,44 @@ from abc import ABC,abstractmethod
 import json
 import csv
 import sys
-from product import Product
+from inventory_report.product import Product
 
 
 class Importer(ABC):
-       def __init__(self,file_path:str):
-        product1=Product("01","Farinha","Farinini","01-05-2021","02-06-2023","TY68 409C JJ43 AD1 PL2F","precisar ser armazenado em local protegido da luz.")
+       def __init__(self,path:str)->None:
+              self.path=path
 
-
-        @abstractmethod
-        def import_data(self)->list[dict]:
-         return Importer.__dict__
+       @abstractmethod
+       def import_data(self)->list[Product]:
+              return NotImplementedError("Esse é um método abstrato."
+                                         "Deve ser implementados nas classes filhas")
     
 
 class JsonImporter(Importer):
-       def __init__(self,file_path:str):
-              self.file_path=file_path
+       def __init__(self,path:str):
+              super().__init__(path)
 
-@abstractmethod
-def import_data(self)->list[dict]:
-        with open(self.file_path,"r") as file:
-               return json.load(file)   
+       
+       def import_data(self):
+        products=[]
+        with open(self.path,"r") as file:
+               item=json.load(file)
+               for product in item:
+                     product1=Product(*product.values())
+                     products.append(product1)
+        return products
 
+class CsvImporter(Importer):
+       def __init__(self,path:str)->str:
+           super().__init__(path)
 
-
-class CsvImporters(Importer):
-       def __ini__(self,id:str,product_name:str,company_name:str,manufacturing_date:str,expiration_date:str,serial_number:str,storage_instructions:str)->str:
-           super().__init__(id,product_name,company_name,manufacturing_date,expiration_date,serial_number,storage_instructions)
-
-@abstractmethod
-def import_data(self)->list[dict]:
-        with open("products.csv","r") as csv_file:
-               csv_reader=csv.reader(csv_file)   
-
+       
+       def import_data(self):
+        products=[]
+        with open(self.path,"r") as csv_file:
+               csv_reader=csv.DictReader(csv_file)
+               for product in csv_reader:
+                   product1=Product(*product.values())
+                   products.append(product1)          
+        return products
 
