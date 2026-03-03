@@ -1,40 +1,55 @@
-from report import Report
+from inventory_report.reports.report import Report
 from inventory_report.inventory import Inventory
 from datetime import date
+from collections import Counter
 
 
-class SimpleReport():
-   
+class SimpleReport(Report):
 
- def add_inventory(self,inventory:Inventory):
-    self.Reports.append(Report)
+    def __init__(self):
+        self.Reports = []
 
+    def add_inventory(self, inventory: Inventory):
+        self.Reports.append(inventory)
 
-def generate(self)->str:
-    closestdate=""
-    maior=""
-    FabricacaoAntiga=""
-    if date.today("YYYY-MM-DD")<=self.expiration_date("YYYY-MM-DD"):
-        for c in range(0,len(Report)):
-            if c==0:
-             FabricacaoAntiga=self.manufacturing_date[0]
-            elif FabricacaoAntiga<self.manufacturing_date[c]:
-             FabricacaoAntiga=self.manufacturing_date[c]
+    def generate(self) -> str:
+        closestdate = ""
+        maior = ""
+        FabricacaoAntiga = ""
 
-        for c in range(0,len(Report)):
-            if c==0:
-                closestdate=self.expiration_date("YYYY-MM-DD")
-            elif self.expiration_date("YYYY-MM-DD")<closestdate:
-                closestdate=self.expiration_date("YYYY-MM-DD")
+        produtos = []
 
-        for c in range (0,len(Report)):
-            if c==0:
-                 maior=sum(len(Report[c]))
-            elif sum(len(Report[c]))>maior:
-                maior=self.company_name
+        # Gathering all the products into the inventories
+        for inventory in self.Reports:
+            produtos.extend(inventory.data)
 
-        
-    return f"""Oldest manufacturing date:{FabricacaoAntiga}
-               Closest expiration date:{closestdate}
-               Company with the largest inventory:{self.company_name}"""
-        
+        hoje = date.today()
+
+        # ----- Oldest manufacturing date -----
+        for c in range(0, len(produtos)):
+            if c == 0:
+                FabricacaoAntiga = produtos[c]["data_de_fabricacao"]
+            elif produtos[c]["data_de_fabricacao"] < FabricacaoAntiga:
+                FabricacaoAntiga = produtos[c]["data_de_fabricacao"]
+
+        # ----- Closest date of expiration -----
+        for c in range(0, len(produtos)):
+            validade = date.fromisoformat(produtos[c]["data_de_validade"])
+            if validade >= hoje:
+                if closestdate == "":
+                    closestdate = produtos[c]["data_de_validade"]
+                elif produtos[c]["data_de_validade"] < closestdate:
+                    closestdate = produtos[c]["data_de_validade"]
+
+        # ----- Company With the biggest inventory -----
+        empresas = []
+        for c in range(0, len(produtos)):
+            empresas.append(produtos[c]["nome_da_empresa"])
+
+        contador = Counter(empresas)
+        maior = contador.most_common(1)[0][0]
+
+        return (
+            f"Oldest manufacturing date: {FabricacaoAntiga}\n"
+            f"Closest expiration date: {closestdate}\n"
+            f"Company with the largest inventory: {maior}")
